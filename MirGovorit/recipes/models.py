@@ -38,5 +38,5 @@ class RecipeProducts(models.Model):
         if not result.exists():
             super(RecipeProducts, self).save(*args, **kwargs)
         else:
-            amount = result[0].product_amount
+            amount = result[0].prod_amount
             raise IntegrityError(f"This recipe already contains this product in amount of {amount}")
