@@ -3,5 +3,13 @@ from django.contrib import admin
 from .models import Recipe, RecipeProducts
 
 
-admin.site.register(Recipe)
-admin.site.register(RecipeProducts)
+class RecipeProductInline(admin.TabularInline):
+    model = RecipeProducts
+    extra = 1
+
+
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = [RecipeProductInline]
+
+
+admin.site.register(Recipe, RecipeAdmin)
