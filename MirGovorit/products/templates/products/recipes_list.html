@@ -1,0 +1,22 @@
+<html>
+
+<head>
+    <title>Recipes</title>
+</head>
+
+<body>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Recipe name</th>
+    </tr>
+    {% for rec in recipes_query %}
+    <tr>
+        <td>{{ rec.id }}</td>
+        <td>{{ rec.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+
+</html>

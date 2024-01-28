@@ -1,4 +1,6 @@
 from django.http import HttpResponse
+from django.shortcuts import render
+from django.core.exceptions import ObjectDoesNotExist
 
 from products.models import Product
 from recipes.models import RecipeProducts, Recipe
@@ -48,3 +50,42 @@ def add_product_to_recipe(request) -> HttpResponse:
             return HttpResponse(f"No such recipe with id = {rec_id} and no such product with id = {prod_id}.")
 
     return HttpResponse("Success!")
+
+
+def show_recipes_without_product(request) -> HttpResponse:
+    """
+    Параметр: product_id.
+
+    Функция возвращает HTML страницу, на которой размещена таблица.
+    В таблице отображены id и названия всех рецептов, в которых указанный продукт отсутствует,
+    или присутствует в количестве меньше 10 грамм.
+    """
+
+    query_dict = request.GET.dict()
+
+    try:
+        prod_id = int(query_dict['product_id'])
+    except KeyError as k_er:
+        return HttpResponse(f"Missing query parameter: {k_er}.")
+    except ValueError as v_er:
+        return HttpResponse(f"Invalid query parameter: {v_er}. Should be an integer.")
+
+    try:
+        cur_prod = Product.objects.get(id=prod_id)
+    except ObjectDoesNotExist as er:
+        return HttpResponse(er)
+
+    without_prod = Recipe.objects.exclude(products__exact=cur_prod.id)
+    ten_or_less = Recipe.objects.filter(
+        id__in=RecipeProducts.objects.filter(product=cur_prod.id, prod_amount__lt=10).
+        select_related("recipe").values_list("recipe_id").distinct()
+    )
+    rec_q = without_prod.union(ten_or_less)
+
+    context = {"recipes_query": rec_q}
+
+    return render(
+        request,
+        template_name="recipes_list.html",
+        context=context,
+    )
