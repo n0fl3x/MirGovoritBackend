@@ -1,11 +1,10 @@
-from pprint import pprint
 from django.http import HttpResponse
 
 from products.models import Product
 from recipes.models import RecipeProducts, Recipe
 
 
-def add_product_to_recipe(request):
+def add_product_to_recipe(request) -> HttpResponse:
     """
     Параметры: recipe_id, product_id, weight.
 
@@ -42,10 +41,10 @@ def add_product_to_recipe(request):
                 prod_amount=weight,
             )
         elif not cur_rec.exists() and cur_prod.exists():
-            return HttpResponse(f"No such recipe with id {rec_id}.")
+            return HttpResponse(f"No such recipe with id = {rec_id}.")
         elif cur_rec.exists() and not cur_prod.exists():
-            return HttpResponse(f"No such product with id {prod_id}.")
+            return HttpResponse(f"No such product with id = {prod_id}.")
         else:
-            return HttpResponse(f"No such recipe with id {rec_id} and no such product with id {prod_id}.")
+            return HttpResponse(f"No such recipe with id = {rec_id} and no such product with id = {prod_id}.")
 
     return HttpResponse("Success!")
