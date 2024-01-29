@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from products.models import Product
 from recipes.models import RecipeProducts, Recipe
@@ -25,6 +25,9 @@ def add_product_to_recipe(request) -> HttpResponse:
     except ValueError as v_er:
         return HttpResponse(f"Invalid query parameter: {v_er}. Should be an integer.")
 
+    if weight < 0:
+        return HttpResponse(f"Amount of product = {weight} is less then zero.")
+
     rec_with_prod = RecipeProducts.objects.filter(
         recipe=rec_id,
         product=prod_id,
@@ -33,21 +36,17 @@ def add_product_to_recipe(request) -> HttpResponse:
     if rec_with_prod.exists():
         rec_with_prod.update(prod_amount=weight)
     else:
-        cur_rec = Recipe.objects.filter(id=rec_id)
-        cur_prod = Product.objects.filter(id=prod_id)
+        try:
+            cur_rec = Recipe.objects.get(id=rec_id)
+            cur_prod = Product.objects.get(id=prod_id)
+        except ObjectDoesNotExist as er:
+            return HttpResponse(er)
 
-        if cur_rec.exists() and cur_prod.exists():
-            RecipeProducts.objects.create(
-                recipe=cur_rec[0],
-                product=cur_prod[0],
-                prod_amount=weight,
-            )
-        elif not cur_rec.exists() and cur_prod.exists():
-            return HttpResponse(f"No such recipe with id = {rec_id}.")
-        elif cur_rec.exists() and not cur_prod.exists():
-            return HttpResponse(f"No such product with id = {prod_id}.")
-        else:
-            return HttpResponse(f"No such recipe with id = {rec_id} and no such product with id = {prod_id}.")
+        RecipeProducts.objects.create(
+            recipe=cur_rec,
+            product=cur_prod,
+            prod_amount=weight,
+        )
 
     return HttpResponse("Success!")
 
@@ -76,13 +75,12 @@ def show_recipes_without_product(request) -> HttpResponse:
         return HttpResponse(er)
 
     without_prod = Recipe.objects.exclude(products__exact=cur_prod.id)
-    ten_or_less = Recipe.objects.filter(
-        id__in=RecipeProducts.objects.filter(product=cur_prod.id, prod_amount__lt=10).
+    recipes_ids = RecipeProducts.objects.filter(product=cur_prod.id, prod_amount__lt=10). \
         select_related("recipe").values_list("recipe_id").distinct()
-    )
-    rec_q = without_prod.union(ten_or_less)
+    ten_or_less = Recipe.objects.filter(id__in=recipes_ids)
+    result_query = without_prod.union(ten_or_less)
 
-    context = {"recipes_query": rec_q}
+    context = {"recipes_query": result_query}
 
     return render(
         request,

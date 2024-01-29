@@ -10,7 +10,3 @@ class Product(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} - {self.use_count} usages"
-
-    def add_count(self) -> None:
-        self.use_count += 1
-        self.save()

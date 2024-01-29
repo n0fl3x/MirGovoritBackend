@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 
 from products.models import Product
 
@@ -23,18 +25,12 @@ class RecipeProducts(models.Model):
         to=Product,
         on_delete=models.CASCADE,
     )
-    prod_amount = models.IntegerField(default=0)
+    prod_amount = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(limit_value=0)],
+    )
 
     def save(self, *args, **kwargs) -> None:
-        result = RecipeProducts.objects.filter(
-            recipe=self.recipe,
-            product=self.product
-        )
-        if not result.exists():
-            super(RecipeProducts, self).save(*args, **kwargs)
-        else:
-            obj = result[0]
-            amount = obj.prod_amount
-
-            if self.prod_amount != amount:
-                result.update(prod_amount=self.prod_amount)
+        if self.prod_amount < 0:
+            raise ValidationError("Amount of product can not be negative.")
+        super().save(*args, **kwargs)

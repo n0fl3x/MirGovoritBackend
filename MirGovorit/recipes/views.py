@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.db.models import F
 
 from products.models import Product
 from .models import Recipe, RecipeProducts
@@ -26,10 +27,7 @@ def cook_recipe(request) -> HttpResponse:
     if not cur_rec.exists():
         return HttpResponse(f"No such recipe with id = {rec_id}.")
     else:
-        cur_rec_prods = RecipeProducts.objects.filter(recipe=rec_id).values("product")
-        cur_prods = Product.objects.filter(id__in=cur_rec_prods)
-
-        for prod in cur_prods:
-            prod.add_count()
+        cur_rec_prods = RecipeProducts.objects.filter(recipe=rec_id).values_list("product")
+        Product.objects.filter(id__in=cur_rec_prods).update(use_count=F('use_count') + 1)
 
     return HttpResponse("Success!")
