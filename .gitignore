@@ -58,7 +58,7 @@ cover/
 # Django stuff:
 *.log
 local_settings.py
-MirGovoritDB.sqlite3
+MirGovorit/MirGovoritDB.sqlite3
 MirGovoritDB.sqlite3-journal
 
 # Flask stuff:
@@ -120,7 +120,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+MirGovorit/.env
 .venv
 env/
 venv/
