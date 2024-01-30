@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from products.models import Product
@@ -31,8 +32,8 @@ def add_product_to_recipe(request) -> HttpResponse:
     )
 
     try:
-        cur_rec = Recipe.objects.get(id=rec_id)
-        cur_prod = Product.objects.get(id=prod_id)
+        cur_rec_id = Recipe.objects.get(id=rec_id).id
+        cur_prod_id = Product.objects.get(id=prod_id).id
     except ObjectDoesNotExist as er:
         return HttpResponse(er)
 
@@ -48,8 +49,8 @@ def add_product_to_recipe(request) -> HttpResponse:
     else:
         try:
             RecipeProducts.objects.create(
-                recipe=cur_rec,
-                product=cur_prod,
+                recipe_id=cur_rec_id,
+                product_id=cur_prod_id,
                 prod_amount=weight,
             )
         except ValidationError as v_err:
@@ -77,15 +78,16 @@ def show_recipes_without_product(request) -> HttpResponse:
         return HttpResponse(f"Invalid query parameter: {v_er}. Should be an integer.")
 
     try:
-        cur_prod = Product.objects.get(id=prod_id)
+        Product.objects.get(id=prod_id)
     except ObjectDoesNotExist as er:
         return HttpResponse(er)
 
-    without_prod = Recipe.objects.exclude(products__exact=cur_prod.id)
-    recipes_ids = RecipeProducts.objects.filter(product=cur_prod.id, prod_amount__lt=10). \
-        select_related("recipe").values_list("recipe_id").distinct()
-    ten_or_less = Recipe.objects.filter(id__in=recipes_ids)
-    result_query = without_prod.union(ten_or_less)
+    rec_ids = RecipeProducts.objects.filter(
+        ~Q(product_id=prod_id) |
+        (Q(product_id__exact=prod_id) & Q(prod_amount__lt=10))
+    ).select_related("recipe").values_list("recipe_id").distinct()
+
+    result_query = Recipe.objects.filter(id__in=rec_ids)
 
     context = {"recipes_query": result_query}
 

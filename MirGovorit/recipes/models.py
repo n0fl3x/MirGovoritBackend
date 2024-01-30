@@ -34,12 +34,12 @@ class RecipeProducts(models.Model):
     @classmethod
     def update_amount(cls, rp_id: int, amount: int):
         if amount < 0:
-            raise ValidationError(message="Amount of product can not be negative.")
+            raise ValidationError(message=f"Amount of product can not be negative ({amount}).")
 
         cls.objects.filter(pk=rp_id). \
             update(prod_amount=F("prod_amount") - F("prod_amount") + amount)
 
     def save(self, *args, **kwargs) -> None:
         if self.prod_amount < 0:
-            raise ValidationError(message="Amount of product can not be negative.")
+            raise ValidationError(message=f"Amount of product can not be negative ({self.prod_amount}).")
         super().save(*args, **kwargs)
