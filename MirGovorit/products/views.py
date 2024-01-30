@@ -25,28 +25,35 @@ def add_product_to_recipe(request) -> HttpResponse:
     except ValueError as v_er:
         return HttpResponse(f"Invalid query parameter: {v_er}. Should be an integer.")
 
-    if weight < 0:
-        return HttpResponse(f"Amount of product = {weight} is less then zero.")
-
     rec_with_prod = RecipeProducts.objects.filter(
         recipe=rec_id,
         product=prod_id,
     )
 
+    try:
+        cur_rec = Recipe.objects.get(id=rec_id)
+        cur_prod = Product.objects.get(id=prod_id)
+    except ObjectDoesNotExist as er:
+        return HttpResponse(er)
+
     if rec_with_prod.exists():
-        rec_with_prod.update(prod_amount=weight)
+        rec_with_prod_id = rec_with_prod.first().id
+        try:
+            rec_with_prod.first().update_amount(
+                rp_id=rec_with_prod_id,
+                amount=weight,
+            )
+        except ValidationError as v_er:
+            return HttpResponse(v_er)
     else:
         try:
-            cur_rec = Recipe.objects.get(id=rec_id)
-            cur_prod = Product.objects.get(id=prod_id)
-        except ObjectDoesNotExist as er:
-            return HttpResponse(er)
-
-        RecipeProducts.objects.create(
-            recipe=cur_rec,
-            product=cur_prod,
-            prod_amount=weight,
-        )
+            RecipeProducts.objects.create(
+                recipe=cur_rec,
+                product=cur_prod,
+                prod_amount=weight,
+            )
+        except ValidationError as v_err:
+            return HttpResponse(v_err)
 
     return HttpResponse("Success!")
 
