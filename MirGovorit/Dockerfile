@@ -1,6 +1,6 @@
 FROM python:3.10.12-slim
 
-WORKDIR usr/src/app
+WORKDIR usr/src/mirgovorit
 
 ENV PYTHONUNBUFFERED=1
 
@@ -9,8 +9,6 @@ ENV DJANGO_SUPERUSER_PASSWORD=admin
 ENV DJANGO_SUPERUSER_EMAIL=''
 
 COPY . .
-
-COPY .env .
 
 RUN pip install -r requirements.txt
 

@@ -1,10 +1,12 @@
 from django.http import HttpResponse
 from django.db.models import F
+from django.views.decorators.http import require_GET
 
 from products.models import Product
 from .models import Recipe, RecipeProducts
 
 
+@require_GET
 def cook_recipe(request) -> HttpResponse:
     """
     Параметр: recipe_id.

@@ -2,11 +2,13 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.views.decorators.http import require_GET
 
 from products.models import Product
 from recipes.models import RecipeProducts, Recipe
 
 
+@require_GET
 def add_product_to_recipe(request) -> HttpResponse:
     """
     Параметры: recipe_id, product_id, weight.
@@ -59,6 +61,7 @@ def add_product_to_recipe(request) -> HttpResponse:
     return HttpResponse("Success!")
 
 
+@require_GET
 def show_recipes_without_product(request) -> HttpResponse:
     """
     Параметр: product_id.

@@ -1,6 +1,5 @@
 import os
 
-from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
 from django.core.management.utils import get_random_secret_key
 
@@ -13,8 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-load_dotenv(find_dotenv())
-SECRET_KEY = os.environ.get('DJANGO_KEY', get_random_secret_key())
+SECRET_KEY = get_random_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
