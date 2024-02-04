@@ -7,7 +7,6 @@ from django.views.decorators.http import require_GET
 
 from products.models import Product
 from recipes.models import RecipeProducts, Recipe
-from products.validators import validate_query_params
 
 
 @require_GET
