@@ -1,11 +1,13 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.db import transaction, DatabaseError
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.views.decorators.http import require_GET
 
 from products.models import Product
 from recipes.models import RecipeProducts, Recipe
+from products.validators import validate_query_params
 
 
 @require_GET
@@ -28,35 +30,25 @@ def add_product_to_recipe(request) -> HttpResponse:
     except ValueError as v_er:
         return HttpResponse(f"Invalid query parameter: {v_er}. Should be an integer.")
 
-    rec_with_prod = RecipeProducts.objects.filter(
-        recipe=rec_id,
-        product=prod_id,
-    )
-
     try:
         cur_rec_id = Recipe.objects.get(id=rec_id).id
         cur_prod_id = Product.objects.get(id=prod_id).id
     except ObjectDoesNotExist as er:
         return HttpResponse(er)
 
-    if rec_with_prod.exists():
-        rec_with_prod_id = rec_with_prod.first().id
-        try:
-            rec_with_prod.first().update_amount(
-                rp_id=rec_with_prod_id,
-                amount=weight,
-            )
-        except ValidationError as v_er:
-            return HttpResponse(v_er)
-    else:
-        try:
-            RecipeProducts.objects.create(
+    try:
+        with transaction.atomic():
+            RecipeProducts.objects.update_or_create(
                 recipe_id=cur_rec_id,
                 product_id=cur_prod_id,
-                prod_amount=weight,
+                defaults={"prod_amount": weight},
             )
-        except ValidationError as v_err:
-            return HttpResponse(v_err)
+    except DatabaseError as db_er:
+        return HttpResponse(f"Database error: {db_er}.")
+    except ValidationError as v_er:
+        return HttpResponse(v_er)
+    except RuntimeError as rt_er:
+        return HttpResponse(f"Waiting error: {rt_er}.")
 
     return HttpResponse("Success!")
 
