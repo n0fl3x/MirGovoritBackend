@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from products.models import Product
 
@@ -32,5 +33,13 @@ class RecipeProducts(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         if self.prod_amount < 0:
-            raise ValidationError(message=f"Amount of product can not be negative ({self.prod_amount}).")
+            raise ValidationError(
+                _(message="Amount of product can not be negative %(amount)s."),
+                params={"amount": self.prod_amount},
+                code="Invalid",
+            )
+
         super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ("recipe", "product")
